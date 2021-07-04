@@ -215,15 +215,13 @@
         newPath = document.createElementNS(svgns, "path");
         newPath.setAttribute('id', 'path');
         newPath.setAttribute('d', createPathString(path));
-        newPath.setAttribute('fill', 'red');    
+        newPath.setAttribute('fill', 'red');
         svg.insertBefore(newPath, svg.firstChild);
     }
     
     function updatePoint(path, selectedElement, x, y){
         point_group = selectedElement.getAttribute('data-point_group');
         point_index = selectedElement.getAttribute('data-point_index');
-        console.log(point_group);
-        console.log(point_group);
         path[point_group][point_index].x = x;
         path[point_group][point_index].y = y;
         svg.getElementById('path').setAttribute('d', createPathString(path));
