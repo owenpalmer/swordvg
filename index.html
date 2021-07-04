@@ -1,0 +1,237 @@
+<html>
+    <body>
+
+    <svg id='main' xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" onload="makeDraggable(evt)">
+    </svg>
+
+    <style>
+        #main{
+            background-color: skyblue;
+        }
+        #path{
+            background-color: skyblue;
+        }
+        .draggable{
+            cursor: move;
+        }
+    </style>
+
+    <script>
+
+        function makeDraggable(evt) {
+            var svg = evt.target;
+            svg.addEventListener('mousedown', startDrag, false);
+            svg.addEventListener('mousemove', drag, false);
+            svg.addEventListener('mouseup', endDrag, false);
+            svg.addEventListener('mouseleave', endDrag);
+
+            function getMousePosition(evt) {
+                var CTM = svg.getScreenCTM();
+                return {
+                    x: (evt.clientX - CTM.e) / CTM.a,
+                    y: (evt.clientY - CTM.f) / CTM.d
+                };
+            }
+
+            var selectedElement, offset, transform;
+
+            function startDrag(evt) {
+                if (evt.target.classList.contains('draggable')) {
+                    selectedElement = evt.target;
+                    console.log(selectedElement);
+                    offset = getMousePosition(evt);
+
+                    // Make sure the first transform on the element is a translate transform
+                    var transforms = selectedElement.transform.baseVal;
+
+                    if (transforms.length === 0 || transforms.getItem(0).type !== SVGTransform.SVG_TRANSFORM_TRANSLATE) {
+                        // Create an transform that translates by (0, 0)
+                        var translate = svg.createSVGTransform();
+                        translate.setTranslate(0, 0);
+                        selectedElement.transform.baseVal.insertItemBefore(translate, 0);
+                    }
+                    // Get initial translation
+                    transform = transforms.getItem(0);
+                    offset.x -= transform.matrix.e;
+                    offset.y -= transform.matrix.f;
+                }
+            }
+
+            function drag(evt) {
+                if (selectedElement) {
+                    evt.preventDefault();
+                    var coord = getMousePosition(evt);
+                    transform.setTranslate(coord.x - offset.x, coord.y - offset.y);
+                    updatePoint(path, selectedElement, coord.x, coord.y)
+                }
+            }
+
+            function endDrag(evt) {
+                selectedElement = false;
+            }
+        }
+    </script>
+
+<script>
+    const svgns = "http://www.w3.org/2000/svg";
+    const svg = document.getElementById("main");
+    total_points = 0;
+    point_group = 0;
+    
+    path1 = [
+        [
+            {
+                type: "M",
+                x: 10,
+                y: 30,
+            }
+        ],
+        [
+            {
+                type: "C",
+                x: 20,
+                y: 20,
+            },
+            {
+                x: 0,
+                y: 0,
+            },
+            {
+                x: 1,
+                y: 50,
+            },
+        ],
+        [
+            {
+                type: "C",
+                x: 20,
+                y: 20,
+            },
+            {
+                x: 0,
+                y: 0,
+            },
+            {
+                x: 90,
+                y: 30,
+            },
+        ],
+        [
+            {
+                type: "C",
+                x: 90,
+                y: 60,
+            },
+            {
+                x: 50,
+                y: 90,
+            },
+            {
+                x: 34,
+                y: 23,
+            },
+        ],
+    ];
+
+    path = [];
+    
+    function createPathString(path){
+        string = '';
+        // Loop over point groups
+        for(group=0;group<path.length;group++){
+            // Loop over points
+            type = path[group][0].type;
+            string += type+" ";
+            for(point=0;point<path[group].length;point++){
+                coordinates = path[group][point];
+                string += coordinates.x+","+coordinates.y+" ";
+            }
+        }
+        return string;
+    }
+
+    addPoint(10,30,2,path);
+    addPoint(40,20,2,path);
+    addPoint(80,30,2,path);
+    addPoint(100,10,2,path);
+    addPoint(60,100,2,path);
+    
+    function addPoint(x,y,r,path){
+        if(path.length == 0){
+            path.push(
+                [
+                    {
+                        type: "M",
+                        x: x,
+                        y: y
+                    }
+                ]
+            );
+            number_of_new_points = 1;
+        }else{
+            path.push(
+                [
+                    {
+                        type: "C",
+                        x: x,
+                        y: y
+                    },
+                    {
+                        x: x,
+                        y: y
+                    },
+                    {
+                        x: x,
+                        y: y
+                    }
+                ]
+            );
+            number_of_new_points = 3;
+        }
+        for(i=0;i<number_of_new_points;i++){
+            total_points++;
+            color = 'black'
+            if(i == 2){
+                color = 'green'
+            }
+            if(number_of_new_points == 1){
+                color = 'blue'
+            }
+            newCircle = document.createElementNS(svgns, "circle");
+            newCircle.setAttribute('id', total_points);
+            newCircle.setAttribute('data-point_group', point_group);
+            newCircle.setAttribute('data-point_index', i);
+            newCircle.setAttribute('class', 'draggable');
+            newCircle.setAttribute('fill', color);
+            newCircle.setAttribute('cx', x);
+            newCircle.setAttribute('cy', y);
+            newCircle.setAttribute('r', r);
+            svg.appendChild(newCircle);
+        }
+        point_group++;
+    }
+    
+    function createPath(path){
+        newPath = document.createElementNS(svgns, "path");
+        newPath.setAttribute('id', 'path');
+        newPath.setAttribute('d', createPathString(path));
+        newPath.setAttribute('fill', 'red');    
+        svg.insertBefore(newPath, svg.firstChild);
+    }
+    
+    function updatePoint(path, selectedElement, x, y){
+        point_group = selectedElement.getAttribute('data-point_group');
+        point_index = selectedElement.getAttribute('data-point_index');
+        console.log(point_group);
+        console.log(point_group);
+        path[point_group][point_index].x = x;
+        path[point_group][point_index].y = y;
+        svg.getElementById('path').setAttribute('d', createPathString(path));
+    }
+    console.log(path);
+    createPath(path);
+
+    </script>
+
+    </body>
+</html>
