@@ -1,0 +1,6 @@
+circle = svg element
+point = array element
+
+create = create svg element
+add = push to array
+update = change attrs of existing svg element

@@ -1,0 +1,9 @@
+#main{
+    background-color: skyblue;
+}
+#path{
+    background-color: skyblue;
+}
+.draggable{
+    cursor: move;
+}
